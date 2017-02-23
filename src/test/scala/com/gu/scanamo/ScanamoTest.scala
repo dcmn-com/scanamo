@@ -3,8 +3,8 @@ package com.gu.scanamo
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType._
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.QueryRequest
-
 import syntax._
+import com.gu.scanamo.filters._
 
 class ScanamoTest extends org.scalatest.FunSpec with org.scalatest.Matchers {
   it("should bring back all results for queries over large datasets") {
@@ -61,10 +61,7 @@ class ScanamoTest extends org.scalatest.FunSpec with org.scalatest.Matchers {
     val input = expectedResult ++ nonExpectedResult
 
     Scanamo.putAll(client)(tableName)(input)
-    val filter = new QueryRequest()
-      .withFilterExpression("begins_with(filterField, :filterValue)")
-      .addExpressionAttributeValuesEntry(":filterValue", new AttributeValue().withS("data1"))
-
+    val filter = BeginsWith("filterField", "data1")
     val result = Scanamo.query[Large](client)(tableName)('name -> "foo", filter)
 
     result should contain theSameElementsAs (expectedResult.map(Right(_)))
@@ -92,9 +89,8 @@ class ScanamoTest extends org.scalatest.FunSpec with org.scalatest.Matchers {
     val input = expectedResult ++ nonExpectedResult
 
     val result = LocalDynamoDB.withTableWithSecondaryIndex(client)("record", "record-index")('id -> S)('name -> S, 'date -> N) {
-      val filter = new QueryRequest()
-        .withFilterExpression("begins_with(criteria, :filterValue)")
-        .addExpressionAttributeValuesEntry(":filterValue", new AttributeValue().withS("ba"))
+
+      val filter = BeginsWith("criteria", "ba")
 
        val operations = for {
          _ <- record.putAll(input)
