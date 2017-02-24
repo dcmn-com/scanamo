@@ -89,23 +89,16 @@ pomExtra := {
 import ReleaseTransformations._
 
 releaseCrossBuild := true
+test in assembly := {}
+credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+publishTo := {
+  val nexus = "http://nexus.internal.dcmn.lan/"
 
-releaseProcess := Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  inquireVersions,
-  runClean,
-  runTest,
-  ReleaseStep(releaseStepTask(tut), enableCrossBuild = true),
-  setReleaseVersion,
-  commitReleaseVersion,
-  tagRelease,
-  ReleaseStep(action = Command.process("publishSigned", _), enableCrossBuild = true),
-  setNextVersion,
-  commitNextVersion,
-  ReleaseStep(action = Command.process("sonatypeReleaseAll", _), enableCrossBuild = true),
-  pushChanges,
-  releaseStepTask(publishMicrosite)
-)
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "repository/dcmn-snapshots/")
+  else
+    Some("releases" at nexus + "repository/dcmn-releases/")
+}
 
 micrositeName             := "Scanamo"
 micrositeDescription      := "Scanamo: simpler DynamoDB access for Scala"
@@ -125,3 +118,9 @@ micrositePalette := Map(
   "gray-lighter"      -> "#F4F3F4",
   "white-color"       -> "#FFFFFF"
 )
+
+artifact in (Compile, assembly) := {
+  val art = (artifact in (Compile, assembly)).value
+  art.copy(`classifier` = Some("assembly"))
+}
+addArtifact(artifact in (Compile, assembly), assembly)
