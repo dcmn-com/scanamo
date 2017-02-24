@@ -2,6 +2,9 @@ package com.gu
 
 import com.gu.scanamo.query._
 import com.gu.scanamo.update._
+import com.gu.scanamo.filters.Filter
+import com.amazonaws.services.dynamodbv2.model.QueryRequest
+
 
 package object scanamo {
 
@@ -68,5 +71,9 @@ package object scanamo {
     implicit class AndUpdateExpression(x: UpdateExpression) {
       def and(y: UpdateExpression): UpdateExpression = AndUpdate(x, y)
     }
+
+    implicit def filterToQuery(f: Filter): QueryRequest = new QueryRequest()
+      .withFilterExpression(f.stringExpression)
+      .addExpressionAttributeValuesEntry(f.placeHolder, f.attributeValue)
   }
 }
